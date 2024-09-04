@@ -1,0 +1,1 @@
+enum NavState { home, settings, about }
