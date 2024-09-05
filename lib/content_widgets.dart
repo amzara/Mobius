@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mobius_app/cubit/search/search_cubit.dart';
+import 'package:mobius_app/cubit/search/search_state.dart';
 import 'cubit/data/data_cubit.dart';
 import 'package:mobius_app/models/data_model.dart';
 import 'package:flutter_pdfview/flutter_pdfview.dart';
@@ -18,7 +20,9 @@ class HomeContent extends StatelessWidget {
           return Center(
             child: ElevatedButton(
               onPressed: () {
-                context.read<DataCubit>().GetRepositoryParent('username', 'password');
+                context
+                    .read<DataCubit>()
+                    .GetRepositoryParent('username', 'password');
               },
               child: Text('Fetch Data'),
             ),
@@ -61,7 +65,6 @@ class HomeContent extends StatelessWidget {
           final mobiusObject = mobiusObjects[index];
           return GestureDetector(
             onTap: () {
-              
               context.read<DataCubit>().OpenFolder(mobiusObject);
             },
             child: Column(
@@ -94,7 +97,6 @@ class HomeContent extends StatelessWidget {
   }
 }
 
-
 class SettingsContent extends StatefulWidget {
   @override
   _SettingsContentState createState() => _SettingsContentState();
@@ -103,8 +105,8 @@ class SettingsContent extends StatefulWidget {
 class _SettingsContentState extends State<SettingsContent> {
   final TextEditingController _firstController = TextEditingController();
   final TextEditingController _thirdController = TextEditingController();
-  String _selectedOption = 'Option 1';
-  final List<String> _options = ['Option 1', 'Option 2', 'Option 3', 'Option 4'];
+  String _selectedOption = 'LK';
+  final List<String> _options = ['LK', 'Option 2', 'Option 3', 'Option 4'];
 
   @override
   Widget build(BuildContext context) {
@@ -114,66 +116,120 @@ class _SettingsContentState extends State<SettingsContent> {
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            TextField(
-              controller: _firstController,
-              decoration: InputDecoration(
-                labelText: 'Search',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.search),
-              ),
-            ),
-            SizedBox(height: 16),
-            DropdownButtonFormField<String>(
-              value: _selectedOption,
-              decoration: InputDecoration(
-                labelText: 'Select an option',
-                border: OutlineInputBorder(),
-              ),
-              items: _options.map((String value) {
-                return DropdownMenuItem<String>(
-                  value: value,
-                  child: Text(value),
-                );
-              }).toList(),
-              onChanged: (newValue) {
-                setState(() {
-                  _selectedOption = newValue!;
-                });
-              },
-            ),
-            SizedBox(height: 16),
-            TextField(
-              controller: _thirdController,
-              decoration: InputDecoration(
-                labelText: 'Additional Info',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.info),
-              ),
-            ),
-            SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: () {
-                // Implement search functionality here
-                print('Search pressed');
-                print('First input: ${_firstController.text}');
-                print('Selected option: $_selectedOption');
-                print('Third input: ${_thirdController.text}');
-              },
-              child: Text('Search'),
-              style: ElevatedButton.styleFrom(
-                padding: EdgeInsets.symmetric(vertical: 16),
-              ),
-            ),
-          ],
+        child: BlocBuilder<SearchCubit, SearchState>(
+          builder: (context, state) {
+            if (state is SearchInitial || state is SearchError) {
+              return _buildSearchForm(context, state);
+            } else if (state is SearchLoading) {
+              return Center(child: CircularProgressIndicator());
+            } else if (state is SearchLoaded) {
+              return _buildSearchResults(state.searchResults);
+            } else {
+              return Center(child: Text('Unknown state'));
+            }
+          },
         ),
       ),
     );
   }
-}
 
+  Widget _buildSearchForm(BuildContext context, SearchState state) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        TextField(
+          controller: _firstController,
+          decoration: InputDecoration(
+            labelText: 'Search',
+            border: OutlineInputBorder(),
+            prefixIcon: Icon(Icons.search),
+          ),
+        ),
+        SizedBox(height: 16),
+        DropdownButtonFormField<String>(
+          value: _selectedOption,
+          decoration: InputDecoration(
+            labelText: 'Select an option',
+            border: OutlineInputBorder(),
+          ),
+          items: _options.map((String value) {
+            return DropdownMenuItem<String>(
+              value: value,
+              child: Text(value),
+            );
+          }).toList(),
+          onChanged: (newValue) {
+            setState(() {
+              _selectedOption = newValue!;
+            });
+          },
+        ),
+        SizedBox(height: 16),
+        TextField(
+          controller: _thirdController,
+          decoration: InputDecoration(
+            labelText: 'Additional Info',
+            border: OutlineInputBorder(),
+            prefixIcon: Icon(Icons.info),
+          ),
+        ),
+        SizedBox(height: 24),
+        ElevatedButton(
+          onPressed: () {
+            context.read<SearchCubit>().searchData(
+                _firstController.text, _selectedOption, _thirdController.text);
+          },
+          child: Text('Search'),
+          style: ElevatedButton.styleFrom(
+            padding: EdgeInsets.symmetric(vertical: 16),
+          ),
+        ),
+        if (state is SearchError)
+          Padding(
+            padding: const EdgeInsets.only(top: 16.0),
+            child: Text(
+              state.message,
+              style: TextStyle(color: Colors.red),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildSearchResults(List<MobiusSearchObject> searchResults) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          'Search Results',
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+        ),
+        SizedBox(height: 16),
+        Expanded(
+          child: ListView.builder(
+            itemCount: searchResults.length,
+            itemBuilder: (context, index) {
+              final result = searchResults[index];
+              return Card(
+                child: ListTile(
+                  title: Text(result.name),
+                  subtitle: Text('Index: ${result.indexNumber}'),
+                 
+                ),
+              );
+            },
+          ),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            context.read<SearchCubit>().emit(SearchInitial());
+          },
+          child: Text('New Search'),
+        ),
+      ],
+    );
+  }
+}
 
 class AboutContent extends StatelessWidget {
   @override

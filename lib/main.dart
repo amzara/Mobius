@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mobius_app/Home.dart';
+import 'package:mobius_app/cubit/search/search_cubit.dart';
 import 'package:mobius_app/login-page.dart';
 import 'package:mobius_app/cubit/login/login_cubit.dart';
 import 'package:mobius_app/cubit/navigation/navigation_cubit.dart';
@@ -23,6 +24,7 @@ class MainApp extends StatelessWidget {
         BlocProvider<LoginCubit>(create: (context) => LoginCubit()),
         BlocProvider<NavCubit>(create: (context) => NavCubit()),
         BlocProvider<DataCubit>(create: (context) => DataCubit()),
+        BlocProvider<SearchCubit>(create: (context) => SearchCubit()),
       ],
       child: MaterialApp(
         title: 'Mobius App',
