@@ -10,6 +10,7 @@ class DataFailure extends DataState {}
 
 class DataSuccess extends DataState {
   final dynamic data;
+  final dynamic mode;
 
-  DataSuccess({required this.data});
+  DataSuccess({required this.data, this.mode});
 }

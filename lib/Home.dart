@@ -37,7 +37,7 @@ class Home extends StatelessWidget {
             ),
             ListTile(
               leading: Icon(Icons.settings),
-              title: Text('Settings'),
+              title: Text('Search'),
               onTap: () {
                 context.read<NavCubit>().showSettings();
                 Navigator.pop(context);

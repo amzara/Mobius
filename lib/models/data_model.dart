@@ -21,3 +21,20 @@ class MobiusObject {
     );
   }
 }
+
+class MobiusSearchObject{
+  String name;
+  String objectId;
+  String indexNumber;
+
+  MobiusSearchObject({
+    required this.name,
+    required this.objectId,
+    required this.indexNumber,
+  });
+
+
+
+
+
+}

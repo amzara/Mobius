@@ -32,10 +32,10 @@ class MainApp extends StatelessWidget {
         initialRoute: '/login',
         routes: {
           '/login': (context) => const Login(),
-          // '/home': (context) => Home(authToken: context.read<LoginCubit>().getAuthToken() ?? ''), // Provide a default or empty auth token
+          '/home': (context) => Home(authToken: context.read<LoginCubit>().getAuthToken() ?? ''), 
         },
         onGenerateRoute: (settings) {
-          // Handle dynamic routes if needed
+       
           return MaterialPageRoute(
             builder: (context) => const Login(),
           );
