@@ -6,6 +6,9 @@ import 'package:json_path/json_path.dart';
 import 'search_state.dart';
 import 'package:mobius_app/models/data_model.dart';
 import 'package:mobius_app/cubit/search/search_cubit.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:flutter_pdfview/flutter_pdfview.dart';
+import 'dart:io';
 
 class SearchCubit extends Cubit<SearchState> {
   final FlutterSecureStorage storage = FlutterSecureStorage();
@@ -113,4 +116,44 @@ class SearchCubit extends Cubit<SearchState> {
       emit(SearchError('An error occurred: $e'));
     }
   }
+
+    Future<String> fetchPdf(String objectId) async {
+    String? authToken = await storage.read(key: 'authToken');
+    if (authToken == null) {
+      throw Exception('Authentication token not found');
+    }
+
+    final response = await http.get(
+      Uri.parse(
+          "https://content.xmegtech.com:3443/mobius/rest/contentstreams?id=$objectId&range=1&outputformat=PDF&rowshading=true&redacted=true&includepresentations=true&associatedviewer=false"),
+      headers: {"client-id": authToken},
+    );
+
+    if (response.statusCode == 200) {
+      var dir = await getApplicationDocumentsDirectory();
+      File file = File("${dir.path}/temp.pdf");
+      await file.writeAsBytes(response.bodyBytes);
+      return file.path;
+    } else {
+      throw Exception(
+          'The request failed with status code: ${response.statusCode}.');
+    }
+  }
+
+ Future<void> viewPdf(String objectId) async {
+    emit(SearchPdfView('')); // Emit empty path to show loading
+    try {
+      final pdfPath = await fetchPdf(objectId);
+      emit(SearchPdfView(pdfPath));
+    } catch (e) {
+      emit(SearchError('Error loading PDF: $e'));
+    }
+  }
+
+  void resetSearch() {
+    emit(SearchInitial());
+  }
+  
+
+ 
 }

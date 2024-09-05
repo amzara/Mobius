@@ -123,7 +123,7 @@ class _SettingsContentState extends State<SettingsContent> {
             } else if (state is SearchLoading) {
               return Center(child: CircularProgressIndicator());
             } else if (state is SearchLoaded) {
-              return _buildSearchResults(state.searchResults);
+              return buildSearchResults(state.searchResults);
             } else {
               return Center(child: Text('Unknown state'));
             }
@@ -196,37 +196,65 @@ class _SettingsContentState extends State<SettingsContent> {
     );
   }
 
-  Widget _buildSearchResults(List<MobiusSearchObject> searchResults) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text(
-          'Search Results',
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-        ),
-        SizedBox(height: 16),
-        Expanded(
-          child: ListView.builder(
-            itemCount: searchResults.length,
-            itemBuilder: (context, index) {
-              final result = searchResults[index];
-              return Card(
-                child: ListTile(
-                  title: Text(result.name),
-                  subtitle: Text('Index: ${result.indexNumber}'),
-                 
-                ),
-              );
-            },
-          ),
-        ),
-        ElevatedButton(
-          onPressed: () {
-            context.read<SearchCubit>().emit(SearchInitial());
-          },
-          child: Text('New Search'),
-        ),
-      ],
+Widget buildSearchResults(List<MobiusSearchObject> searchResults) {
+    return BlocBuilder<SearchCubit, SearchState>(
+      builder: (context, state) {
+        if (state is SearchPdfView) {
+          return Column(
+            children: [
+              Expanded(
+                child: state.pdfPath.isEmpty
+                    ? Center(child: CircularProgressIndicator())
+                    : PDFView(
+                        filePath: state.pdfPath,
+                        pageSnap: true,
+                        defaultPage: 0,
+                      ),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  context.read<SearchCubit>().resetSearch();
+                },
+                child: Text('Back to Search'),
+              ),
+            ],
+          );
+        }
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              'Search Results',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 16),
+            Expanded(
+              child: ListView.builder(
+                itemCount: searchResults.length,
+                itemBuilder: (context, index) {
+                  final result = searchResults[index];
+                  return Card(
+                    child: ListTile(
+                      title: Text(result.name),
+                      subtitle: Text('Index: ${result.indexNumber}'),
+                      onTap: () {
+                        context.read<SearchCubit>().viewPdf(result.objectId);
+                      },
+                    ),
+                  );
+                },
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                context.read<SearchCubit>().resetSearch();
+              },
+              child: Text('New Search'),
+            ),
+          ],
+        );
+      },
     );
   }
 }

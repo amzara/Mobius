@@ -18,3 +18,8 @@ class SearchError extends SearchState {
 
   SearchError(this.message);
 }
+
+class SearchPdfView extends SearchState {
+  final String pdfPath;
+  SearchPdfView(this.pdfPath);
+}
