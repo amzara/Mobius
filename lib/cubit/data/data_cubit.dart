@@ -16,9 +16,10 @@ class DataCubit extends Cubit<DataState> {
 
   DataCubit() : super(DataInitial());
 
-  Future<void> GetRepositoryParent(String username, String password) async {
-    emit(DataLoading());
-    navigationHistory.clear(); // Clear history when fetching root
+  Future<void> GetRepositoryParent() async {
+    print("Attempting to fetch repository parent...");
+    emit(DataLoading());  // Explicitly emit loading state while fetching data
+    navigationHistory.clear();
 
     String? authToken = await storage.read(key: 'authToken');
 
@@ -49,6 +50,7 @@ class DataCubit extends Cubit<DataState> {
   }
 
   Future<void> OpenFolder(MobiusObject mobiusObject) async {
+    emit(DataLoading()); // Emit loading state when navigating into a folder
     String _pdfPath = '';
     String? authToken = await storage.read(key: 'authToken');
 
@@ -70,7 +72,7 @@ class DataCubit extends Cubit<DataState> {
         if (response.statusCode == 200) {
           final data = jsonDecode(response.body);
           final mobiusObjects = await parseMobiusData(data);
-          navigationHistory.add(mobiusObject); // Add to history when opening a folder
+          navigationHistory.add(mobiusObject);
           emit(DataSuccess(data: mobiusObjects, mode: 1));
         } else {
           emit(DataFailure());
@@ -105,18 +107,16 @@ class DataCubit extends Cubit<DataState> {
         await OpenFolder(navigationHistory.last); // Open the previous folder
         navigationHistory.removeLast(); // Remove it again as OpenFolder will add it back
       } else {
-        await GetRepositoryParent('username', 'password'); // If history is empty, go to root
+        await GetRepositoryParent(); // If history is empty, go to root
       }
     } else {
       emit(DataFailure());
     }
   }
 
-
-
-
-
-
+  void resetState() {
+    emit(DataInitial());
+  }
 }
 
 

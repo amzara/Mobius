@@ -6,6 +6,7 @@ import 'package:mobius_app/login-page.dart';
 import 'package:mobius_app/cubit/login/login_cubit.dart';
 import 'package:mobius_app/cubit/navigation/navigation_cubit.dart';
 import 'package:mobius_app/cubit/data/data_cubit.dart';
+import 'Viewer.dart';
 
 import 'dart:io';
 
@@ -35,6 +36,7 @@ class MainApp extends StatelessWidget {
         routes: {
           '/login': (context) => const Login(),
           '/home': (context) => Home(authToken: context.read<LoginCubit>().getAuthToken() ?? ''), 
+
         },
         onGenerateRoute: (settings) {
        

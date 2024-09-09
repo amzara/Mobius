@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mobius_app/Viewer.dart';
 import 'package:mobius_app/cubit/search/search_cubit.dart';
 import 'package:mobius_app/cubit/search/search_state.dart';
 import 'cubit/data/data_cubit.dart';
@@ -17,16 +18,12 @@ class HomeContent extends StatelessWidget {
     return BlocBuilder<DataCubit, DataState>(
       builder: (context, state) {
         if (state is DataInitial) {
-          return Center(
-            child: ElevatedButton(
-              onPressed: () {
-                context
-                    .read<DataCubit>()
-                    .GetRepositoryParent('username', 'password');
-              },
-              child: Text('Fetch Data'),
-            ),
-          );
+          // Ensure the state transitions to loading
+          context.read<DataCubit>().GetRepositoryParent();
+          return Center(child: CircularProgressIndicator());
+        } else if (state is DataLoading) {
+          // Keep showing a loading spinner while fetching data
+          return Center(child: CircularProgressIndicator());
         } else if (state is DataSuccess) {
           return Scaffold(
             appBar: AppBar(
@@ -41,8 +38,11 @@ class HomeContent extends StatelessWidget {
             body: _buildBody(context, state),
           );
         } else if (state is DataFailure) {
-          return Center(child: Text('Failed to fetch data'));
-        }
+  return BlocProvider<DataCubit>(
+    create: (context) => DataCubit(),
+    child: HomeContent(authToken: authToken), // Pass any required data
+  );
+}
 
         return Center(child: CircularProgressIndicator());
       },
@@ -97,6 +97,7 @@ class HomeContent extends StatelessWidget {
   }
 }
 
+
 class SettingsContent extends StatefulWidget {
   @override
   _SettingsContentState createState() => _SettingsContentState();
@@ -106,7 +107,7 @@ class _SettingsContentState extends State<SettingsContent> {
   final TextEditingController _firstController = TextEditingController();
   final TextEditingController _thirdController = TextEditingController();
   String _selectedOption = 'LK';
-  final List<String> _options = ['LK', 'Option 2', 'Option 3', 'Option 4'];
+  final List<String> _options = ['LK', 'EQ', 'NE', 'More'];
 
   @override
   Widget build(BuildContext context) {
@@ -196,30 +197,9 @@ class _SettingsContentState extends State<SettingsContent> {
     );
   }
 
-Widget buildSearchResults(List<MobiusSearchObject> searchResults) {
+  Widget buildSearchResults(List<MobiusSearchObject> searchResults) {
     return BlocBuilder<SearchCubit, SearchState>(
       builder: (context, state) {
-        if (state is SearchPdfView) {
-          return Column(
-            children: [
-              Expanded(
-                child: state.pdfPath.isEmpty
-                    ? Center(child: CircularProgressIndicator())
-                    : PDFView(
-                        filePath: state.pdfPath,
-                        pageSnap: true,
-                        defaultPage: 0,
-                      ),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  context.read<SearchCubit>().resetSearch();
-                },
-                child: Text('Back to Search'),
-              ),
-            ],
-          );
-        }
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -238,10 +218,17 @@ Widget buildSearchResults(List<MobiusSearchObject> searchResults) {
                     child: ListTile(
                       title: Text(result.name),
                       subtitle: Text('Index: ${result.indexNumber}'),
-                      onTap: () {
-                        context.read<SearchCubit>().viewPdf(result.objectId);
+                      onTap: () async {
+                          String pdfPath1 = await context.read<SearchCubit>().fetchPdf(result.objectId);
+                        
+                        Navigator.push<void>(
+                          context,
+                          MaterialPageRoute<void>(
+                            builder: (BuildContext context) =>  Viewer(pdfPath: pdfPath1),
+                          ),
+                        );
                       },
-                    ),
+                    ),  
                   );
                 },
               ),
@@ -256,6 +243,20 @@ Widget buildSearchResults(List<MobiusSearchObject> searchResults) {
         );
       },
     );
+  }
+}
+
+class Navigationbar extends StatefulWidget {
+  const Navigationbar({super.key});
+
+  @override
+  State<Navigationbar> createState() => _NavigationbarState();
+}
+
+class _NavigationbarState extends State<Navigationbar> {
+  @override
+  Widget build(BuildContext context) {
+    return const Row();
   }
 }
 
